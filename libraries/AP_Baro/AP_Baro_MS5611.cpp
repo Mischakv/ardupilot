@@ -93,12 +93,12 @@ bool AP_Baro_MS56XX::_init()
     _dev->transfer(&CMD_MS56XX_RESET, 1, nullptr, 0);
     hal.scheduler->delay(4);
     
-    const char *name = "MS5611";
+    const char *name = "MS5803";
     switch (_ms56xx_type) {
     case BARO_MS5607:
         name = "MS5607";
         FALLTHROUGH;
-    case BARO_MS5611:
+    case BARO_MS5803:
         prom_read_ok = _read_prom_5611(prom);
         break;
     case BARO_MS5837:
@@ -138,6 +138,9 @@ bool AP_Baro_MS56XX::_init()
     set_bus_id(_instance, _dev->get_bus_id());
 
     if (_ms56xx_type == BARO_MS5837) {
+        _frontend.set_type(_instance, AP_Baro::BARO_TYPE_WATER);
+    }
+    if (_ms56xx_type == BARO_MS5803) {
         _frontend.set_type(_instance, AP_Baro::BARO_TYPE_WATER);
     }
 
@@ -333,8 +336,9 @@ void AP_Baro_MS56XX::update()
     case BARO_MS5607:
         _calculate_5607();
         break;
-    case BARO_MS5611:
+    case BARO_MS5803:
         _calculate_5611();
+	//_calculate_5803();  // Kilroy says one day soon we'll write dedicated functions
         break;
     case BARO_MS5637:
         _calculate_5637();

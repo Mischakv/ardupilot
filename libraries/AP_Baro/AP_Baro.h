@@ -40,6 +40,8 @@ public:
     AP_Baro(const AP_Baro &other) = delete;
     AP_Baro &operator=(const AP_Baro&) = delete;
 
+    void _probe_i2c_barometers(void); // Kilroy
+
     // get singleton
     static AP_Baro *get_singleton(void) {
         return _singleton;
@@ -236,7 +238,7 @@ private:
     enum {
         PROBE_BMP085=(1<<0),
         PROBE_BMP280=(1<<1),
-        PROBE_MS5611=(1<<2),
+        PROBE_MS5803=(1<<2),
         PROBE_MS5607=(1<<3),
         PROBE_MS5637=(1<<4),
         PROBE_FBM320=(1<<5),
@@ -298,7 +300,6 @@ private:
     uint32_t                            _last_notify_ms;
 
     bool _add_backend(AP_Baro_Backend *backend);
-    void _probe_i2c_barometers(void);
     AP_Int8                            _filter_range;  // valid value range from mean value
     AP_Int32                           _baro_probe_ext;
 

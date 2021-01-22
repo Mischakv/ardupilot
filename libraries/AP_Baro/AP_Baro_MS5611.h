@@ -6,12 +6,12 @@
 #include <AP_HAL/Semaphores.h>
 #include <AP_HAL/Device.h>
 
-#ifndef HAL_BARO_MS5611_I2C_ADDR
-#define HAL_BARO_MS5611_I2C_ADDR 0x77
+#ifndef HAL_BARO_MS5803_I2C_ADDR
+#define HAL_BARO_MS5803_I2C_ADDR 0x77
 #endif
 
-#ifndef HAL_BARO_MS5611_I2C_ADDR2
-#define HAL_BARO_MS5611_I2C_ADDR2 0x76
+#ifndef HAL_BARO_MS5803_I2C_ADDR2
+#define HAL_BARO_MS5803_I2C_ADDR2 0x76
 #endif
 
 #ifndef HAL_BARO_MS5607_I2C_ADDR
@@ -32,13 +32,13 @@ public:
     void update() override;
 
     enum MS56XX_TYPE {
-        BARO_MS5611 = 0,
+        BARO_MS5803 = 0,
         BARO_MS5607 = 1,
         BARO_MS5637 = 2,
         BARO_MS5837 = 3
     };
 
-    static AP_Baro_Backend *probe(AP_Baro &baro, AP_HAL::OwnPtr<AP_HAL::Device> dev, enum MS56XX_TYPE ms56xx_type = BARO_MS5611);
+    static AP_Baro_Backend *probe(AP_Baro &baro, AP_HAL::OwnPtr<AP_HAL::Device> dev, enum MS56XX_TYPE ms56xx_type = BARO_MS5803);
 
 private:
     /*

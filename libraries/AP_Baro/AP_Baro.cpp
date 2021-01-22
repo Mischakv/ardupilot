@@ -64,7 +64,9 @@
 #endif
 
 #ifndef HAL_BARO_PROBE_EXT_DEFAULT
- #define HAL_BARO_PROBE_EXT_DEFAULT 0
+ #define HAL_BARO_PROBE_EXT_DEFAULT 0 // Kilroy says this should probe MS5803 (we use the Bitmask number, not the Value)
+// Search for the upper var name here in this file
+// This used to be MS5611 of course
 #endif
 
 #ifdef HAL_BUILD_AP_PERIPH
@@ -113,14 +115,14 @@ const AP_Param::GroupInfo AP_Baro::var_info[] = {
     // @Description: This selects which barometer will be the primary if multiple barometers are found
     // @Values: 0:FirstBaro,1:2ndBaro,2:3rdBaro
     // @User: Advanced
-    AP_GROUPINFO("_PRIMARY", 6, AP_Baro, _primary_baro, 0),
+    AP_GROUPINFO("_PRIMARY", 6, AP_Baro, _primary_baro, 1),
 
     // @Param: _EXT_BUS
     // @DisplayName: External baro bus
     // @Description: This selects the bus number for looking for an I2C barometer. When set to -1 it will probe all external i2c buses based on the GND_PROBE_EXT parameter.
     // @Values: -1:Disabled,0:Bus0,1:Bus1
     // @User: Advanced
-    AP_GROUPINFO("_EXT_BUS", 7, AP_Baro, _ext_bus, -1),
+    AP_GROUPINFO("_EXT_BUS", 7, AP_Baro, _ext_bus, 0),
 
     // @Param: _SPEC_GRAV
     // @DisplayName: Specific Gravity (For water depth measurement)
@@ -168,8 +170,8 @@ const AP_Param::GroupInfo AP_Baro::var_info[] = {
     // @Param: _PROBE_EXT
     // @DisplayName: External barometers to probe
     // @Description: This sets which types of external i2c barometer to look for. It is a bitmask of barometer types. The I2C buses to probe is based on GND_EXT_BUS. If BARO_EXT_BUS is -1 then it will probe all external buses, otherwise it will probe just the bus number given in GND_EXT_BUS.
-    // @Bitmask: 0:BMP085,1:BMP280,2:MS5611,3:MS5607,4:MS5637,5:FBM320,6:DPS280,7:LPS25H,8:Keller,9:MS5837,10:BMP388,11:SPL06,12:MSP
-    // @Values: 1:BMP085,2:BMP280,4:MS5611,8:MS5607,16:MS5637,32:FBM320,64:DPS280,128:LPS25H,256:Keller,512:MS5837,1024:BMP388,2048:SPL06,4096:MSP
+    // @Bitmask: 0:BMP085,1:BMP280,2:MS5803,3:MS5607,4:MS5637,5:FBM320,6:DPS280,7:LPS25H,8:Keller,9:MS5837,10:BMP388,11:SPL06,12:MSP
+    // @Values: 1:BMP085,2:BMP280,4:MS5803,8:MS5607,16:MS5637,32:FBM320,64:DPS280,128:LPS25H,256:Keller,512:MS5837,1024:BMP388,2048:SPL06,4096:MSP
     // @User: Advanced
     AP_GROUPINFO("_PROBE_EXT", 14, AP_Baro, _baro_probe_ext, HAL_BARO_PROBE_EXT_DEFAULT),
 #endif
@@ -268,7 +270,7 @@ void AP_Baro::calibrate(bool save)
     _alt_offset.set_and_save(0);
 
     // let the barometer settle for a full second after startup
-    // the MS5611 reads quite a long way off for the first second,
+    // the MS5803 reads quite a long way off for the first second,
     // leading to about 1m of error if we don't wait
     for (uint8_t i = 0; i < 10; i++) {
         uint32_t tstart = AP_HAL::millis();
@@ -554,9 +556,9 @@ void AP_Baro::init(void)
 #elif AP_FEATURE_BOARD_DETECT
     switch (AP_BoardConfig::get_board_type()) {
     case AP_BoardConfig::PX4_BOARD_PX4V1:
-#ifdef HAL_BARO_MS5611_I2C_BUS
+#ifdef HAL_BARO_MS5803_I2C_BUS
         ADD_BACKEND(AP_Baro_MS56XX::probe(*this,
-                                          std::move(GET_I2C_DEVICE(HAL_BARO_MS5611_I2C_BUS, HAL_BARO_MS5611_I2C_ADDR))));
+                                          std::move(GET_I2C_DEVICE(HAL_BARO_MS5803_I2C_BUS, HAL_BARO_MS5803_I2C_ADDR))));
 #endif
         break;
 
@@ -566,20 +568,20 @@ void AP_Baro::init(void)
     case AP_BoardConfig::PX4_BOARD_PH2SLIM:
     case AP_BoardConfig::PX4_BOARD_PIXHAWK_PRO:
         ADD_BACKEND(AP_Baro_MS56XX::probe(*this,
-                                          std::move(hal.spi->get_device(HAL_BARO_MS5611_NAME))));
+                                          std::move(hal.spi->get_device(HAL_BARO_MS5803_NAME))));
         break;
 
     case AP_BoardConfig::PX4_BOARD_PIXHAWK2:
     case AP_BoardConfig::PX4_BOARD_SP01:
         ADD_BACKEND(AP_Baro_MS56XX::probe(*this,
-                                          std::move(hal.spi->get_device(HAL_BARO_MS5611_SPI_EXT_NAME))));
+                                          std::move(hal.spi->get_device(HAL_BARO_MS5803_SPI_EXT_NAME))));
         ADD_BACKEND(AP_Baro_MS56XX::probe(*this,
-                                          std::move(hal.spi->get_device(HAL_BARO_MS5611_NAME))));
+                                          std::move(hal.spi->get_device(HAL_BARO_MS5803_NAME))));
         break;
 
     case AP_BoardConfig::PX4_BOARD_MINDPXV2:
         ADD_BACKEND(AP_Baro_MS56XX::probe(*this,
-                                          std::move(hal.spi->get_device(HAL_BARO_MS5611_NAME))));
+                                          std::move(hal.spi->get_device(HAL_BARO_MS5803_NAME))));
         break;
 
     case AP_BoardConfig::PX4_BOARD_AEROFC:
@@ -592,12 +594,12 @@ void AP_Baro::init(void)
 
     case AP_BoardConfig::VRX_BOARD_BRAIN54:
         ADD_BACKEND(AP_Baro_MS56XX::probe(*this,
-                                          std::move(hal.spi->get_device(HAL_BARO_MS5611_NAME))));
+                                          std::move(hal.spi->get_device(HAL_BARO_MS5803_NAME))));
         ADD_BACKEND(AP_Baro_MS56XX::probe(*this,
-                                          std::move(hal.spi->get_device(HAL_BARO_MS5611_SPI_EXT_NAME))));
-#ifdef HAL_BARO_MS5611_SPI_IMU_NAME
+                                          std::move(hal.spi->get_device(HAL_BARO_MS5803_SPI_EXT_NAME))));
+#ifdef HAL_BARO_MS5803_SPI_IMU_NAME
         ADD_BACKEND(AP_Baro_MS56XX::probe(*this,
-                                          std::move(hal.spi->get_device(HAL_BARO_MS5611_SPI_IMU_NAME))));
+                                          std::move(hal.spi->get_device(HAL_BARO_MS5803_SPI_IMU_NAME))));
 #endif
         break;
 
@@ -608,7 +610,7 @@ void AP_Baro::init(void)
     case AP_BoardConfig::VRX_BOARD_UBRAIN51:
     case AP_BoardConfig::VRX_BOARD_UBRAIN52:
         ADD_BACKEND(AP_Baro_MS56XX::probe(*this,
-                                          std::move(hal.spi->get_device(HAL_BARO_MS5611_NAME))));
+                                          std::move(hal.spi->get_device(HAL_BARO_MS5803_NAME))));
         break;
 
     case AP_BoardConfig::PX4_BOARD_PCNC1:
@@ -620,7 +622,7 @@ void AP_Baro::init(void)
     case AP_BoardConfig::PX4_BOARD_FMUV5:
     case AP_BoardConfig::PX4_BOARD_FMUV6:
         ADD_BACKEND(AP_Baro_MS56XX::probe(*this,
-                                          std::move(hal.spi->get_device(HAL_BARO_MS5611_NAME))));
+                                          std::move(hal.spi->get_device(HAL_BARO_MS5803_NAME))));
         break;
 
     default:
@@ -661,7 +663,7 @@ void AP_Baro::init(void)
                                           std::move(GET_I2C_DEVICE(_ext_bus, HAL_BARO_KELLERLD_I2C_ADDR))));
 #else
         ADD_BACKEND(AP_Baro_MS56XX::probe(*this,
-                                          std::move(GET_I2C_DEVICE(_ext_bus, HAL_BARO_MS5611_I2C_ADDR))));
+                                          std::move(GET_I2C_DEVICE(_ext_bus, HAL_BARO_MS5803_I2C_ADDR))));
 #endif
     }
 
@@ -745,12 +747,12 @@ void AP_Baro::_probe_i2c_barometers(void)
                                               std::move(GET_I2C_DEVICE(i, HAL_BARO_BMP388_I2C_ADDR2))));
         }
     }
-    if (probe & PROBE_MS5611) {
+    if (probe & PROBE_MS5803) {
         FOREACH_I2C_MASK(i,mask) {
             ADD_BACKEND(AP_Baro_MS56XX::probe(*this,
-                                              std::move(GET_I2C_DEVICE(i, HAL_BARO_MS5611_I2C_ADDR))));
+                                              std::move(GET_I2C_DEVICE(i, HAL_BARO_MS5803_I2C_ADDR))));
             ADD_BACKEND(AP_Baro_MS56XX::probe(*this,
-                                              std::move(GET_I2C_DEVICE(i, HAL_BARO_MS5611_I2C_ADDR2))));
+                                              std::move(GET_I2C_DEVICE(i, HAL_BARO_MS5803_I2C_ADDR2))));
         }
     }
     if (probe & PROBE_MS5607) {
